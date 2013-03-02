@@ -1,7 +1,8 @@
-//DELETE THIS LINE AND BEGIN ADDING STYLES
+@charset "UTF-8";
+@import "compass";
+@import "vars";
+@import "mixins";
+@import "colors";
 
-.example {
-  background: orange;
-  width: 400px;
-  height: 300px;
-}
+/* ie9 support */
+$experimental-support-for-svg: true;

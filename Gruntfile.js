@@ -108,7 +108,7 @@ module.exports = function (grunt) {
       },
       dist: {
         files: {
-          'dist/tables.scss' : [
+          'dist/alchemy.scss' : [
             'component/styles/**/*.scss'
           ]
         }
@@ -158,9 +158,8 @@ module.exports = function (grunt) {
     cssmin: {
       dist: {
         files: {
-          'dist/tables.css': [
-            '.tmp/styles/{,*/}*.css',
-            'app/styles/{,*/}*.css'
+          'dist/alchemy.css': [
+            '.tmp/styles/main.css'
           ]
         }
       }
