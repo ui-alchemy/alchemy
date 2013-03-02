@@ -12,7 +12,7 @@ module.exports = function (grunt) {
   var yeomanConfig = {
     app: 'app',
     dist: 'dist',
-    componentName: 'alchemy'
+    component: require('./dist/component.json').name
   };
 
   try {
@@ -94,6 +94,11 @@ module.exports = function (grunt) {
       unit: {
         configFile: 'testacular.conf.js',
         singleRun: true
+      },
+      ci: {
+        configFile: 'testacular.conf.js',
+        singleRun: true,
+        browsers: ['PhantomJS', 'Firefox']
       }
     },
     compass: {
@@ -108,7 +113,7 @@ module.exports = function (grunt) {
       },
       dist: {
         files: {
-          'dist/alchemy.scss' : [
+          'dist/<%= yeoman.component %>.scss' : [
             'component/styles/**/*.scss'
           ]
         }
@@ -125,9 +130,12 @@ module.exports = function (grunt) {
     concat: {
       dist: {
         files: {
-          'dist/alchemy.js': [
+          'dist/<%= yeoman.component %>.js': [
             'component/templates/*.js', //must be first
             'component/scripts/**/*.js'
+          ],
+          'dist/<%= yeoman.component %>.css': [
+            '.tmp/styles/main.css'
           ]
         }
       }
@@ -158,8 +166,8 @@ module.exports = function (grunt) {
     cssmin: {
       dist: {
         files: {
-          'dist/alchemy.css': [
-            '.tmp/styles/main.css'
+          'dist/<%= yeoman.component %>.css': [
+            '.tmp/styles/{,*/}*.css'
           ]
         }
       }
@@ -268,13 +276,22 @@ module.exports = function (grunt) {
     'watch'
   ]);
 
-  grunt.registerTask('test', [
-    'clean:server',
-    'compass',
-    'html2js',
-    'connect:test',
-    'testacular'
-  ]);
+  grunt.registerTask('test', function(arg1){
+    var task_list = [
+      'clean:server',
+      'compass',
+      'html2js',
+      'connect:test'
+    ];
+
+    if (arg1 === 'ci') {
+      task_list.push('testacular:ci');
+    } else {
+      task_list.push('testacular:unit');
+    }
+
+    grunt.task.run(task_list);
+  });
 
   grunt.registerTask('build', [
     'clean:dist',
@@ -284,7 +301,7 @@ module.exports = function (grunt) {
     'html2js',
     //'useminPrepare',
     //'imagemin',
-    'cssmin',
+    //'cssmin',
     'concat',
     'copy',
     //'cdnify',
