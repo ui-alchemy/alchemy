@@ -11,13 +11,14 @@ files = [
   'app/components/jquery/jquery.js',
   'app/components/angular/angular.js',
   'app/components/angular-mocks/angular-mocks.js',
+  'app/components/angular-scenario/angular-scenario.js',
 
   'component/scripts/**/*.js',
 
   'app/views/**/*.html',
-  'component/templates/**/*.html',
+  //'component/templates/**/*.html',
 
-  'test/**/*.js'
+  'test/**/*_test.js'
 ];
 
 preprocessors = {
