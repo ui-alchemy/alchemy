@@ -133,9 +133,6 @@ module.exports = function (grunt) {
           'dist/<%= yeoman.component %>.js': [
             'component/templates/*.js', //must be first
             'component/scripts/**/*.js'
-          ],
-          'dist/<%= yeoman.component %>.css': [
-            '.tmp/styles/main.css'
           ]
         }
       }
