@@ -1,13 +1,14 @@
 {
-  "name": "alchemy",
-  "version": "0.0.5",
-  "main" : ["./*.js", "./*.scss", "./*.css"],
+  "name": "alchemy-base",
+  "version": "0.0.6",
+  "main" : ["dist/*.scss", "dist/*.css"],
+  "ignore": [
+  ],
   "dependencies": {
-    "angular": "~1.0.5",
-    "jquery": "~1.9.1"
+    "angular": "~1.0.5"
   },
   "devDependencies": {
-    "angular-mocks": "~1.0.5",
-    "angular-scenario": "~1.0.5"
-  }
+    "jquery": "~1.9.1",
+    "angular-mocks": "~1.0.5"
+ }
 }

@@ -8,20 +8,16 @@ files = [
   JASMINE,
   JASMINE_ADAPTER,
 
-  'app/components/jquery/jquery.js',
-  'app/components/angular/angular.js',
-  'app/components/angular-mocks/angular-mocks.js',
+  'demo/components/jquery/jquery.js',
+  'demo/components/angular/angular.js',
+  'demo/components/angular-mocks/angular-mocks.js',
 
   'component/scripts/**/*.js',
+  
+  '.tmp/templates/**/*.js',
 
-  'app/views/**/*.html',
-
-  'test/**/*_test.js'
+  'test/**/*.js'
 ];
-
-preprocessors = {
-  '**/*.html': 'html2js'
-};
 
 // list of files to exclude
 exclude = [];
@@ -44,7 +40,7 @@ colors = true;
 logLevel = LOG_INFO;
 
 // enable / disable watching file and executing tests whenever any file changes
-autoWatch = false;
+autoWatch = true;
 
 // Start these browsers, currently available:
 // - Chrome

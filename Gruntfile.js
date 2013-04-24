@@ -10,35 +10,34 @@ module.exports = function (grunt) {
 
   // configurable paths
   var yeomanConfig = {
-    app: 'app',
+    demo: 'demo',
     dist: 'dist',
     component: require('./dist/component.json').name
   };
 
   try {
-    yeomanConfig.app = require('./component.json').appPath || yeomanConfig.app;
+    yeomanConfig.demo = require('./dist/component.json').demoPath || yeomanConfig.demo;
   } catch (e) {}
 
   grunt.initConfig({
     yeoman: yeomanConfig,
     watch: {
       compass: {
-        files: ['app/styles/{,*/}*.{scss,sass}', 'component/styles/{,*/}*.{scss,sass}'],
+        files: ['demo/styles/{,*/}*.{scss,sass}', 'component/styles/{,*/}*.{scss,sass}'],
         tasks: ['compass']
       },
       templates: {
-        files: ['component/templates/*.html', 'app/views/*.html'],
-        tasks: 'html2js:directives'
+        files: ['component/templates/*.html', 'demo/views/*.html']
       },
       livereload: {
         files: [
-          'app/{,*/}*.html',
+          'demo/{,*/}*.html',
           'component/{,*/}*.html',
           '.tmp/styles/{,*/}*.css',
-          'app/styles/{,*/}*.scss',
-          'app/scripts/{,*/}*.js',
+          'demo/styles/{,*/}*.scss',
+          'demo/scripts/{,*/}*.js',
           'component/scripts/{,*/}*.js',
-          'app/images/{,*/}*.{png,jpg,jpeg}'
+          'demo/images/{,*/}*.{png,jpg,jpeg}'
         ],
         tasks: ['livereload']
       }
@@ -54,7 +53,7 @@ module.exports = function (grunt) {
               lrSnippet,
               mountFolder(connect, '.tmp'),
               mountFolder(connect, ''),
-              mountFolder(connect, yeomanConfig.app)
+              mountFolder(connect, yeomanConfig.demo)
             ];
           }
         }
@@ -90,25 +89,25 @@ module.exports = function (grunt) {
         'component/scripts/{,*/}*.js'
       ]
     },
-    testacular: {
+    karma: {
       unit: {
-        configFile: 'testacular.conf.js',
+        configFile: 'karma.conf.js',
         singleRun: true
       },
       ci: {
-        configFile: 'testacular.conf.js',
+        configFile: 'karma.conf.js',
         singleRun: true,
         browsers: ['PhantomJS', 'Firefox']
       }
     },
     compass: {
       options: {
-        sassDir: 'app/styles',
+        sassDir: './',
         cssDir: '.tmp/styles',
-        imagesDir: 'app/images',
-        javascriptsDir: 'app/scripts',
-        fontsDir: 'app/styles/fonts',
-        importPath: ['app/components', 'component/styles'],
+        imagesDir: 'demo/images',
+        javascriptsDir: 'demo/scripts',
+        fontsDir: 'demo/styles/fonts',
+        importPath: ['demo/components', 'component/styles'],
         relativeAssets: true
       },
       dist: {
@@ -124,21 +123,35 @@ module.exports = function (grunt) {
         }
       }
     },
-    html2js: {
-      directives: ['component/templates/*.html', 'app/views/*.html'],
+    ngtemplates: {
+      build: {
+        options: {
+          base: 'component/templates',
+          prepend: 'component/templates/',
+          module: 'alch-templates'
+        },
+        src: ['component/templates/*.html'],
+        dest: '.tmp/templates/<%= yeoman.component %>.templates.js'
+      }
     },
     concat: {
       dist: {
         files: {
           'dist/<%= yeoman.component %>.js': [
-            'component/templates/*.js', //must be first
+            '.tmp/templates/*.js', //must be first
             'component/scripts/**/*.js'
+          ],
+          'dist/media_object.css': [
+            '.tmp/styles/media_object.css'
+          ],
+          'dist/normalize.css': [
+            '.tmp/styles/normalize.css'
           ]
         }
       }
     },
     useminPrepare: {
-      html: 'app/index.html',
+      html: 'demo/index.html',
       options: {
         dest: 'dist'
       }
@@ -154,7 +167,7 @@ module.exports = function (grunt) {
       dist: {
         files: [{
           expand: true,
-          cwd: 'app/images',
+          cwd: 'demo/images',
           src: '{,*/}*.{png,jpg,jpeg}',
           dest: 'dist/images'
         }]
@@ -184,7 +197,7 @@ module.exports = function (grunt) {
         },
         files: [{
           expand: true,
-          cwd: 'app',
+          cwd: 'demo',
           src: ['*.html', 'views/*.html'],
           dest: 'dist'
         }]
@@ -208,8 +221,8 @@ module.exports = function (grunt) {
     uglify: {
       dist: {
         files: {
-          'dist/scripts/scripts.js': [
-            'dist/scripts/scripts.js'
+          'dist/<%= yeoman.component %>.min.js': [
+            'dist/*.js'
           ],
         }
       }
@@ -219,7 +232,7 @@ module.exports = function (grunt) {
         files: [{
           expand: true,
           dot: true,
-          cwd: 'app',
+          cwd: 'demo',
           dest: 'dist',
           src: [
             '*.{ico,txt}',
@@ -239,26 +252,6 @@ module.exports = function (grunt) {
     }
   });
 
-  var escapeContent = function(content) {
-    return content.replace(/"/g, '\\"').replace(/\n/g, '" +\n    "');
-  };
-
-  grunt.registerMultiTask('html2js', 'Generate js version of html template.', function() {
-    var files = grunt._watch_changed_files || grunt.file.expand(this.data);
-
-    files.forEach(function(file) {
-      var content  = escapeContent(grunt.file.read(file)),
-          template = '';
-
-      template += 'angular.module("alch-templates").run(function($templateCache) {\n';
-      template += '  $templateCache.put("' + file + '",\n';
-      template += '    "' + content + '");\n';
-      template += '});\n';
-
-      grunt.file.write(file + '.js', template);
-    });
-  });
-
   grunt.renameTask('regarde', 'watch');
   // remove when mincss task is renamed
   grunt.renameTask('mincss', 'cssmin');
@@ -266,7 +259,7 @@ module.exports = function (grunt) {
   grunt.registerTask('server', [
     'clean:server',
     'compass:server',
-    'html2js',
+    'ngtemplates',
     'livereload-start',
     'connect:livereload',
     'open',
@@ -277,14 +270,14 @@ module.exports = function (grunt) {
     var task_list = [
       'clean:server',
       'compass',
-      'html2js',
+      'ngtemplates',
       'connect:test'
     ];
 
     if (arg1 === 'ci') {
-      task_list.push('testacular:ci');
+      task_list.push('karma:ci');
     } else {
-      task_list.push('testacular:unit');
+      task_list.push('karma:unit');
     }
 
     grunt.task.run(task_list);
@@ -295,7 +288,7 @@ module.exports = function (grunt) {
     'jshint',
     'test',
     'compass:dist',
-    'html2js',
+    'ngtemplates',
     //'useminPrepare',
     //'imagemin',
     //'cssmin',
@@ -303,8 +296,8 @@ module.exports = function (grunt) {
     'copy',
     //'cdnify',
     //'usemin',
-    //'ngmin',
-    //'uglify'
+    'ngmin',
+    'uglify'
   ]);
 
   grunt.registerTask('default', ['build']);
