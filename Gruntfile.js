@@ -1,4 +1,6 @@
 'use strict';
+
+
 var lrSnippet = require('grunt-contrib-livereload/lib/utils').livereloadSnippet;
 var mountFolder = function (connect, dir) {
   return connect.static(require('path').resolve(dir));
@@ -249,7 +251,100 @@ module.exports = function (grunt) {
           ]
         }]
       }
-    }
+    },
+    release: {}
+  });
+
+  grunt.registerTask('release', 'Creates a release branch based off of the dist directory.', function() {
+    var options = this.options({
+          dist: 'dist',
+          release_branch: 'release',
+          pull: true
+        }),
+
+        shell = 'shell',
+        prefix = 'release_component_',
+        
+        checkVersionExists = {
+          options: {
+            callback: function(err, out, stderr, cb) {
+              var version = grunt.file.readJSON('dist/component.json').version;
+
+              if (out.indexOf(version) !==  -1) {
+                grunt.fail.fatal('The version you are trying to create a release for already exists. Please bump dist/component.json, commit and try again.')
+              } else {
+                cb();
+              }
+            }
+          },
+
+          command: 'git tag'
+        },
+        
+        deleteBranch = {
+            options: {
+                callback: function(err, out, stderr, cb) {
+                    grunt.log.writeln('Deleting release branch');
+
+                    cb();
+                }
+            },
+
+            command: 'git branch -D release'
+        },
+
+        subtreeDist = {
+          options: {
+            callback: function(err, out, stderr, cb) {
+              grunt.log.writeln('Generating release branch via "git subtree" of dist/ directorl.warn(error [, errorcode])y.');
+              grunt.log.writeln(out);
+
+              cb();
+            }
+          },
+
+          command: 'git subtree split --prefix dist/ --branch release'
+        },
+
+        tagRelease = {
+          options: {
+            stderr: true,
+            stdout: true
+          },
+
+          command: (function() {
+            var version = grunt.file.readJSON('dist/component.json').version;
+
+            return 'git checkout release && git tag ' + version;
+          }())
+        },
+
+        finish =  {
+          options: {
+            stderr: true,
+            stdout: true
+          },
+
+          command: 'git push alchemy release --force && git push --tags'
+        };
+
+    grunt.log.writeln(JSON.stringify(options));
+
+    // dynamically create desired shell tasks
+    grunt.config.set('shell.' + prefix + 'checkVersionExists', checkVersionExists);
+    grunt.config.set('shell.' + prefix + 'deleteBranch', deleteBranch);
+    grunt.config.set('shell.' + prefix + 'subtreeDist', subtreeDist);
+    grunt.config.set('shell.' + prefix + 'tagRelease', tagRelease);
+    grunt.config.set('shell.' + prefix + 'finish', finish);
+
+    // run created shell tasks
+    grunt.task.run([
+      'shell:' + prefix + 'checkVersionExists',
+      'shell:' + prefix + 'deleteBranch',
+      'shell:' + prefix + 'subtreeDist',
+      'shell:' + prefix + 'tagRelease',
+      'shell:' + prefix + 'finish'
+    ]);
   });
 
   grunt.renameTask('regarde', 'watch');
