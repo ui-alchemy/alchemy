@@ -1,4 +1,4 @@
 {
     "directory": "demo/components",
-    "json"     : "dist/component.json"
+    "json"     : "bower.json"
 }

@@ -1,7 +1,7 @@
 {
   "name": "alchemy-base",
-  "version": "0.0.6",
-  "main" : ["dist/*.scss", "dist/*.css"],
+  "version": "0.0.8-devel",
+  "main" : ["*.scss", "*.css", ".js"],
   "ignore": [
   ],
   "dependencies": {

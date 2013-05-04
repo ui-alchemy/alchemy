@@ -14,11 +14,11 @@ module.exports = function (grunt) {
   var yeomanConfig = {
     demo: 'demo',
     dist: 'dist',
-    component: require('./dist/component.json').name
+    component: require('./bower.json').name
   };
 
   try {
-    yeomanConfig.demo = require('./dist/component.json').demoPath || yeomanConfig.demo;
+    yeomanConfig.demo = require('./bower.json').demoPath || yeomanConfig.demo;
   } catch (e) {}
 
   grunt.initConfig({
@@ -256,95 +256,109 @@ module.exports = function (grunt) {
   });
 
   grunt.registerTask('release', 'Creates a release branch based off of the dist directory.', function() {
-    var options = this.options({
-          dist: 'dist',
-          release_branch: 'release',
-          pull: true
-        }),
+    var done = this.async(),
+        component = grunt.file.readJSON('./bower.json'),
+        version = grunt.file.readJSON('./bower.json').version.replace('-devel', ''),
 
-        shell = 'shell',
-        prefix = 'release_component_',
-        
-        checkVersionExists = {
-          options: {
-            callback: function(err, out, stderr, cb) {
-              var version = grunt.file.readJSON('dist/component.json').version;
-
-              if (out.indexOf(version) !==  -1) {
-                grunt.fail.fatal('The version you are trying to create a release for already exists. Please bump dist/component.json, commit and try again.')
-              } else {
-                cb();
-              }
-            }
-          },
-
-          command: 'git tag'
-        },
-        
-        deleteBranch = {
-            options: {
-                callback: function(err, out, stderr, cb) {
-                    grunt.log.writeln('Deleting release branch');
-
-                    cb();
+        checkVersion = function() {
+            grunt.util.spawn({
+                cmd: 'git',
+                args: ['tag']
+            }, function(err, result) {
+                if (result.stdout.indexOf(version) !==  -1) {
+                    grunt.fail.fatal('The version you are trying to create a release for already exists. Please bump bower.json, commit and try again.');
+                } else {
+                    deleteBranch();
                 }
-            },
-
-            command: 'git branch -D release'
+            });
+        },
+        
+        deleteBranch = function() {
+            grunt.util.spawn({
+                cmd: 'git',
+                args: ['branch', '-D', 'release']
+            }, function(err) {
+                if (!err) {
+                    grunt.log.writeln('Release branch deleted.');
+                }
+                subtreeDist();
+            });
         },
 
-        subtreeDist = {
-          options: {
-            callback: function(err, out, stderr, cb) {
-              grunt.log.writeln('Generating release branch via "git subtree" of dist/ directorl.warn(error [, errorcode])y.');
-              grunt.log.writeln(out);
-
-              cb();
-            }
-          },
-
-          command: 'git subtree split --prefix dist/ --branch release'
+        subtreeDist = function() {
+            grunt.util.spawn({
+                cmd: 'git',
+                args: ['subtree', 'split', '--prefix', 'dist/', '--branch', 'release']
+            }, function(err) {
+                if (!err) {
+                    grunt.log.writeln('Dist directory subtreed.');
+                    checkoutRelease();
+                } else {
+                    grunt.log.error(err);
+                }
+            });
         },
 
-        tagRelease = {
-          options: {
-            stderr: true,
-            stdout: true
-          },
-
-          command: (function() {
-            var version = grunt.file.readJSON('dist/component.json').version;
-
-            return 'git checkout release && git tag ' + version;
-          }())
+        checkoutRelease = function() {
+            grunt.util.spawn({
+                cmd: 'git',
+                args: ['checkout', 'release']
+            }, function(err) {
+                if (!err) {
+                    grunt.log.writeln('Release branch checked out.');
+                    component.version = version;
+                    grunt.file.write('./bower.json', JSON.stringify(component, null, ' '));
+                    addComponent();
+                } else {
+                    grunt.log.error(err);
+                }
+            });
         },
 
-        finish =  {
-          options: {
-            stderr: true,
-            stdout: true
-          },
+        addComponent = function() {
+            grunt.util.spawn({
+                cmd: 'git',
+                args: ['add', 'bower.json']
+            }, function(err) {
+                if (!err) {
+                    grunt.log.writeln('Adding bower.json');
+                    commitComponent();
+                } else {
+                    grunt.log.error(err);
+                }
+            });
+        },
 
-          command: 'git push alchemy release --force && git push --tags'
+        commitComponent = function() {
+            grunt.util.spawn({
+                cmd: 'git',
+                args: ['commit', '-a', '-m', 'Automatic commit of component definition and version at [' + version + ']']
+            }, function(err) {
+                if (!err) {
+                    grunt.log.writeln('Automatic commit of component definition and version at [' + version + ']');
+                    tagRelease();
+                } else {
+                    grunt.log.error(err);
+                }
+            });
+        },
+
+        tagRelease = function() {
+            grunt.util.spawn({
+                cmd: 'git',
+                args: ['tag', version]
+            }, function(err) {
+                if (!err) {
+                    grunt.log.writeln('Tagging release.');
+                    done();
+                } else {
+                    grunt.log.error(err);
+                    done(false);
+                }
+            });
         };
-
-    grunt.log.writeln(JSON.stringify(options));
-
-    // dynamically create desired shell tasks
-    grunt.config.set('shell.' + prefix + 'checkVersionExists', checkVersionExists);
-    grunt.config.set('shell.' + prefix + 'deleteBranch', deleteBranch);
-    grunt.config.set('shell.' + prefix + 'subtreeDist', subtreeDist);
-    grunt.config.set('shell.' + prefix + 'tagRelease', tagRelease);
-    grunt.config.set('shell.' + prefix + 'finish', finish);
-
-    // run created shell tasks
-    grunt.task.run([
-      'shell:' + prefix + 'checkVersionExists',
-      'shell:' + prefix + 'deleteBranch',
-      'shell:' + prefix + 'subtreeDist',
-      'shell:' + prefix + 'tagRelease',
-      'shell:' + prefix + 'finish'
-    ]);
+        
+        checkVersion();
   });
 
   grunt.renameTask('regarde', 'watch');
@@ -362,7 +376,7 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('test', function(arg1){
-    var task_list = [
+    var taskList = [
       'clean:server',
       'compass',
       'ngtemplates',
@@ -370,12 +384,12 @@ module.exports = function (grunt) {
     ];
 
     if (arg1 === 'ci') {
-      task_list.push('karma:ci');
+      taskList.push('karma:ci');
     } else {
-      task_list.push('karma:unit');
+      taskList.push('karma:unit');
     }
 
-    grunt.task.run(task_list);
+    grunt.task.run(taskList);
   });
 
   grunt.registerTask('build', [
