@@ -8,7 +8,7 @@ var mountFolder = function (connect, dir) {
 
 module.exports = function (grunt) {
   // load all grunt tasks
-  require('matchdep').filterDev('grunt-*').concat(['gruntacular']).forEach(grunt.loadNpmTasks);
+  require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
 
   // configurable paths
   var yeomanConfig = {
@@ -152,29 +152,6 @@ module.exports = function (grunt) {
         }
       }
     },
-    useminPrepare: {
-      html: 'demo/index.html',
-      options: {
-        dest: 'dist'
-      }
-    },
-    usemin: {
-      html: ['dist/{,*/}*.html'],
-      css: ['dist/styles/{,*/}*.css'],
-      options: {
-        dirs: ['dist']
-      }
-    },
-    imagemin: {
-      dist: {
-        files: [{
-          expand: true,
-          cwd: 'demo/images',
-          src: '{,*/}*.{png,jpg,jpeg}',
-          dest: 'dist/images'
-        }]
-      }
-    },
     cssmin: {
       dist: {
         files: {
@@ -182,32 +159,6 @@ module.exports = function (grunt) {
             '.tmp/styles/{,*/}*.css'
           ]
         }
-      }
-    },
-    htmlmin: {
-      dist: {
-        options: {
-          /*removeCommentsFromCDATA: true,
-          // https://github.com/yeoman/grunt-usemin/issues/44
-          //collapseWhitespace: true,
-          collapseBooleanAttributes: true,
-          removeAttributeQuotes: true,
-          removeRedundantAttributes: true,
-          useShortDoctype: true,
-          removeEmptyAttributes: true,
-          removeOptionalTags: true*/
-        },
-        files: [{
-          expand: true,
-          cwd: 'demo',
-          src: ['*.html', 'views/*.html'],
-          dest: 'dist'
-        }]
-      }
-    },
-    cdnify: {
-      dist: {
-        html: ['dist/*.html']
       }
     },
     ngmin: {
@@ -252,7 +203,20 @@ module.exports = function (grunt) {
         }]
       }
     },
-    release: {}
+    release: {},
+    docular: {
+      groups: [{
+        groupTitle: "Alchemy",
+        groupId: "alchemy",
+        sections: [{
+          id: '<%= yeoman.component %>',
+          title: 'Base',
+          scripts: ['component/scripts/']
+        }]
+      }],
+      showDocularDocs: false,
+      showAngularDocs: false
+    }
   });
 
   grunt.registerTask('release', 'Creates a release branch based off of the dist directory.', function() {
@@ -380,6 +344,7 @@ module.exports = function (grunt) {
       'clean:server',
       'compass',
       'ngtemplates',
+      'jshint',
       'connect:test'
     ];
 
@@ -398,13 +363,8 @@ module.exports = function (grunt) {
     'test',
     'compass:dist',
     'ngtemplates',
-    //'useminPrepare',
-    //'imagemin',
-    //'cssmin',
     'concat',
     'copy',
-    //'cdnify',
-    //'usemin',
     'ngmin',
     'uglify'
   ]);
