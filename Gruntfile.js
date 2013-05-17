@@ -203,7 +203,7 @@ module.exports = function (grunt) {
         }]
       }
     },
-    release: {},
+    releaseTask: {},
     docular: {
       groups: [{
         groupTitle: 'Alchemy',
@@ -219,10 +219,9 @@ module.exports = function (grunt) {
     }
   });
 
-  grunt.registerTask('release', 'Creates a release branch based off of the dist directory.', function() {
+  grunt.registerTask('releaseTask', 'Creates a release branch based off of the dist directory.', function() {
     var done = this.async(),
-        component = grunt.file.readJSON('./bower.json'),
-        version = grunt.file.readJSON('./bower.json').version.replace('-devel', ''),
+        version = grunt.file.readJSON('./bower.json').version,
 
         checkVersion = function() {
             grunt.util.spawn({
@@ -231,34 +230,24 @@ module.exports = function (grunt) {
             }, function(err, result) {
                 if (result.stdout.indexOf(version) !==  -1) {
                     grunt.fail.fatal('The version you are trying to create a release for already exists. Please bump bower.json, commit and try again.');
+                    done(false);
                 } else {
-                    deleteBranch();
+                    copyComponentFile();
                 }
             });
         },
 
-        deleteBranch = function() {
+        copyComponentFile = function() {
             grunt.util.spawn({
-                cmd: 'git',
-                args: ['branch', '-D', 'release']
-            }, function(err) {
+                cmd: 'cp',
+                args: ['bower.json', 'dist/']
+            }, function(err, result) {
                 if (!err) {
-                    grunt.log.writeln('Release branch deleted.');
-                }
-                subtreeDist();
-            });
-        },
-
-        subtreeDist = function() {
-            grunt.util.spawn({
-                cmd: 'git',
-                args: ['subtree', 'split', '--prefix', 'dist/', '--branch', 'release']
-            }, function(err) {
-                if (!err) {
-                    grunt.log.writeln('Dist directory subtreed.');
+                    grunt.log.writeln('Component file copied to build directory.');
                     checkoutRelease();
                 } else {
-                    grunt.log.error(err);
+                    grunt.log.error(result.stdout);
+                    done(false);
                 }
             });
         },
@@ -267,42 +256,50 @@ module.exports = function (grunt) {
             grunt.util.spawn({
                 cmd: 'git',
                 args: ['checkout', 'release']
-            }, function(err) {
+            }, function(err, result) {
                 if (!err) {
                     grunt.log.writeln('Release branch checked out.');
-                    component.version = version;
-                    grunt.file.write('./bower.json', JSON.stringify(component, null, ' '));
-                    addComponent();
+                    copyBuild();
                 } else {
-                    grunt.log.error(err);
+                    grunt.log.error(result.stdout);
+                    done(false);
                 }
             });
         },
 
-        addComponent = function() {
+        copyBuild = function() {
+            grunt.file.recurse('dist/', function(abspath, rootdir, subdir, filename) {
+                grunt.file.copy(abspath, rootdir + '../' + filename);
+            });
+            addFiles();
+        },
+
+        addFiles = function() {
             grunt.util.spawn({
                 cmd: 'git',
-                args: ['add', 'bower.json']
-            }, function(err) {
+                args: ['add', './']
+            }, function(err, result) {
                 if (!err) {
-                    grunt.log.writeln('Adding bower.json');
-                    commitComponent();
+                    grunt.log.writeln('Added any new files to release.');
+                    commitBuild();
                 } else {
-                    grunt.log.error(err);
+                    grunt.log.error(result.stdout);
+                    done(false);
                 }
             });
         },
 
-        commitComponent = function() {
+        commitBuild = function() {
             grunt.util.spawn({
                 cmd: 'git',
-                args: ['commit', '-a', '-m', 'Automatic commit of component definition and version at [' + version + ']']
-            }, function(err) {
+                args: ['commit', '-a', '-m', 'Automatic commit of build at [' + version + ']']
+            }, function(err, result) {
                 if (!err) {
-                    grunt.log.writeln('Automatic commit of component definition and version at [' + version + ']');
+                    grunt.log.writeln('Automatic commit of build at [' + version + ']');
                     tagRelease();
                 } else {
-                    grunt.log.error(err);
+                    grunt.log.error(result.stdout);
+                    done(false);
                 }
             });
         },
@@ -311,12 +308,12 @@ module.exports = function (grunt) {
             grunt.util.spawn({
                 cmd: 'git',
                 args: ['tag', version]
-            }, function(err) {
+            }, function(err, result) {
                 if (!err) {
                     grunt.log.writeln('Tagging release.');
                     done();
                 } else {
-                    grunt.log.error(err);
+                    grunt.log.error(result.stdout);
                     done(false);
                 }
             });
@@ -367,6 +364,11 @@ module.exports = function (grunt) {
     'copy',
     'ngmin',
     'uglify'
+  ]);
+
+  grunt.registerTask('release', [
+    'build',
+    'releaseTask'
   ]);
 
   grunt.registerTask('default', ['build']);
