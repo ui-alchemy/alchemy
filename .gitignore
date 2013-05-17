@@ -5,3 +5,4 @@ demo/components
 *.swp
 *.swn
 *.swo
+dist/
