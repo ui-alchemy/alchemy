@@ -10,11 +10,11 @@
  */
 angular.module('alch-templates', []);
 
-/** 
+/**
  * @ngdoc module
  * @name alchemy
  *
- * @description 
+ * @description
  *   Base Alchemy module for components to link up to.
  */
 angular.module('alchemy', ['alch-templates']);

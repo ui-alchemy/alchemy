@@ -1,6 +1,6 @@
 'use strict';
 
-/** 
+/**
  * @ngdoc directive
  * @name alchemy.directive:onEnter
  * @restrict A

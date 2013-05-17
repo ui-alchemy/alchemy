@@ -206,8 +206,8 @@ module.exports = function (grunt) {
     release: {},
     docular: {
       groups: [{
-        groupTitle: "Alchemy",
-        groupId: "alchemy",
+        groupTitle: 'Alchemy',
+        groupId: 'alchemy',
         sections: [{
           id: '<%= yeoman.component %>',
           title: 'Base',
@@ -236,7 +236,7 @@ module.exports = function (grunt) {
                 }
             });
         },
-        
+
         deleteBranch = function() {
             grunt.util.spawn({
                 cmd: 'git',
@@ -321,7 +321,7 @@ module.exports = function (grunt) {
                 }
             });
         };
-        
+
         checkVersion();
   });
 
