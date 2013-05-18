@@ -224,6 +224,20 @@ module.exports = function (grunt) {
     var done = this.async(),
         version = grunt.file.readJSON('./bower.json').version,
 
+        fetchTags = function() {
+            grunt.util.spawn({
+                cmd: 'git',
+                args: ['fetch', '--tags']
+            }, function(err, result) {
+                if (err) {
+                    grunt.fail.fatal(result.stdout);
+                    done(false);
+                } else {
+                    checkVersion();
+                }
+            });
+        },
+
         checkVersion = function() {
             grunt.util.spawn({
                 cmd: 'git',
@@ -238,7 +252,8 @@ module.exports = function (grunt) {
             });
         };
 
-    checkVersion();
+    grunt.log.writeln('Fetching remote tags.');
+    fetchTags();
   });
 
   grunt.registerTask('releaseTask', 'Creates a release branch based off of the dist directory.', function() {
