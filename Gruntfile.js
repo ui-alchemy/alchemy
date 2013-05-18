@@ -204,6 +204,7 @@ module.exports = function (grunt) {
       }
     },
     releaseTask: {},
+    checkVersion: {},
     docular: {
       groups: [{
         groupTitle: 'Alchemy',
@@ -219,7 +220,7 @@ module.exports = function (grunt) {
     }
   });
 
-  grunt.registerTask('releaseTask', 'Creates a release branch based off of the dist directory.', function() {
+  grunt.registerTask('checkVersion', 'Checks the version attempting to be built against previously built versions.', function() {
     var done = this.async(),
         version = grunt.file.readJSON('./bower.json').version,
 
@@ -232,10 +233,17 @@ module.exports = function (grunt) {
                     grunt.fail.fatal('The version you are trying to create a release for already exists. Please bump bower.json, commit and try again.');
                     done(false);
                 } else {
-                    copyComponentFile();
+                    done();
                 }
             });
-        },
+        };
+
+    checkVersion();
+  });
+
+  grunt.registerTask('releaseTask', 'Creates a release branch based off of the dist directory.', function() {
+    var done = this.async(),
+        version = grunt.file.readJSON('./bower.json').version,
 
         copyComponentFile = function() {
             grunt.util.spawn({
@@ -319,7 +327,7 @@ module.exports = function (grunt) {
             });
         };
 
-        checkVersion();
+    copyComponentFile();
   });
 
   grunt.renameTask('regarde', 'watch');
@@ -367,6 +375,7 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('release', [
+    'checkVersion',
     'build',
     'releaseTask'
   ]);
