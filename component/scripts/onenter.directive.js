@@ -25,7 +25,7 @@ angular.module('alchemy').directive('onEnter', function() {
         restrict: 'A',
         scope: true,
         link: function(scope, element, attrs) {
-            element.bind('keydown keypress', function(event) {
+            element.bind('keypress', function(event) {
                 if(event.which === 13) {
                     scope.$apply(attrs.onEnter);
                 }
